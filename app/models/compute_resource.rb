@@ -3,7 +3,7 @@ class ComputeResource < ActiveRecord::Base
   include Taxonomix
   include Encryptable
   encrypts :password
-  SUPPORTED_PROVIDERS = %w[Libvirt Ovirt EC2 Vmware Openstack Rackspace GCE]
+  SUPPORTED_PROVIDERS = %w[Libvirt Ovirt EC2 Vmware Openstack Rackspace GCE One]
   PROVIDERS = SUPPORTED_PROVIDERS.reject { |p| !SETTINGS[p.downcase.to_sym] }
   audited :except => [:password, :attrs], :allow_mass_assignment => true
   serialize :attrs, Hash
