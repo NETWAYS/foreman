@@ -34,7 +34,7 @@ SETTINGS[:libvirt] = defined?(::Fog) && defined?(::Libvirt)
 SETTINGS[:ovirt] = defined?(::Fog) && defined?(::OVIRT)
 SETTINGS[:vmware] = defined?(::Fog) && defined?(::RbVmomi)
 SETTINGS[:gce] = defined?(::Fog) && defined?(::Google::APIClient::VERSION)
-SETTINGS[:one] = defined?(::OpenNebula::VERSION)
+SETTINGS[:one] = defined?(::Fog) && defined?(::OpenNebula::VERSION)
 SETTINGS[:openstack] = SETTINGS[:rackspace] = SETTINGS[:ec2] = !! defined?(::Fog)
 
 require File.expand_path('../../lib/timed_cached_store.rb', __FILE__)
