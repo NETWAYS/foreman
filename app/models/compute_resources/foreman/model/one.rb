@@ -25,8 +25,6 @@ module Foreman::Model
 
     def find_vm_by_uuid uuid
       client.servers.get(uuid)
-    rescue Fog::Compute::AWS::Error
-      raise(ActiveRecord::RecordNotFound)
     end
 
     def new_vm attr={ }
@@ -34,6 +32,10 @@ module Foreman::Model
     end
 
     def interfaces
+      #client.interfaces rescue []
+      []
+    end
+    def vminterfaces
       #client.interfaces rescue []
       []
     end
@@ -61,24 +63,24 @@ module Foreman::Model
       vm.gid = args[:gid] unless args[:gid].empty?
       vm.flavor = client.flavors.get(args[:template_id])
 
-      vm.flavor.VCPU = args[:vcpu] unless args[:vcpu].empty?
-      vm.flavor.MEMORY = args[:memory] unless args[:memory].empty?
-      vm.flavor.NIC = []
+      vm.flavor.vcpu = args[:vcpu] unless args[:vcpu].empty?
+      vm.flavor.memory = args[:memory] unless args[:memory].empty?
+      vm.flavor.nic = []
 
       #INTERFACES {"new_interfaces"=>{"id"=>"0", "_delete"=>"", "model"=>"virtio"}, "new_1398239695352"=>{"id"=>"2", "_delete"=>"", "model"=>"virtio"}, "new_1398239700415"=>{"id"=>"2", "_delete"=>"", "model"=>"virtio"}, "new_1398239705632"=>{"id"=>"0", "_delete"=>"", "model"=>"e1000"}}
       logger.info "INTERFACES #{args[:interfaces_attributes].inspect}"
-      nics = args[:interfaces_attributes].values
+      nics = args[:vminterfaces_attributes].values
       if nics.is_a? Array then
         nics.each do |nic|
-	  unless (nic["id"].empty? || nic["model"].empty?)
-	    vm.flavor.NIC << client.interfaces.new({ :vnet => client.networks.get(nic["id"]), :model => nic["model"]})
+	  unless (nic["vnetid"].empty? || nic["model"].empty?)
+	    vm.flavor.nic << client.interfaces.new({ :vnet => client.networks.get(nic["vnetid"]), :model => nic["model"]})
 	  end
         end
       end
 
       logger.info "VM: #{vm.inspect}"
       logger.info "FLAVOR: #{vm.flavor.inspect}"
-      logger.info "NIC: #{vm.flavor.NIC.inspect}"
+      logger.info "NIC: #{vm.flavor.nic.inspect}"
       logger.info "FLAVORtos: #{vm.flavor.to_s}"
       vm.save
     rescue ::OpenNebula::Error => e
@@ -90,8 +92,6 @@ module Foreman::Model
     def test_connection options = {}
       super
       errors[:user].empty? and errors[:password].empty? and not client.client.get_version.is_a?(OpenNebula::Error)
-    rescue Fog::Compute::AWS::Error => e
-      errors[:base] << e.message
     end
 
     def console(uuid)
@@ -125,7 +125,7 @@ module Foreman::Model
       Host.my_hosts.where(:mac => [vm.vm_mac_address]).first
     end
 
-    def new_interface attr={ }
+    def new_vminterface attr={}
       client.interfaces.new attr
     end
 
